@@ -3,6 +3,7 @@ package org.example.service;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.example.entities.UserInfo;
+import org.example.event.UserInfoProducer;
 import org.example.model.UserInfoDto;
 import org.example.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Autowired
     private final PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private final UserInfoProducer userInfoProducer;
 
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
@@ -53,7 +57,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
         String userId  = UUID.randomUUID().toString();
         userRepository.save(new UserInfo(userId, userInfoDto.getUsername(), userInfoDto.getPassword(), new HashSet<>()));
+        //We will be sending here the vent to userService to save data there also
+        // we will be using kafka for this
 
+        //writing code for pushing event
+        //we will serialize the data here and deserialize the data at userService
+        //set the serialize settings in the application.properties file
+
+        userInfoProducer.sendEventToKafka(userInfoDto);
         return true;
     }
 
